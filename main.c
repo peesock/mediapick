@@ -17,7 +17,7 @@ int main(int argc, char **argv){
 	const int PATH_MAX = pathconf(".", _PC_PATH_MAX);
 	char* cachedir = (char*)malloc(PATH_MAX);
 	cachedir[0] = '\0';
-	sprintf(cachedir, "%s/.cache/%s/", getenv("HOME"), basename(argv[0]));
+	sprintf(cachedir, "%s/.cache/%s", getenv("HOME"), basename(argv[0]));
 	char cwd[PATH_MAX];
 	if ((getcwd(cwd, sizeof(cwd))) == NULL) {
 		perror("getcwd() error");
@@ -48,8 +48,11 @@ int main(int argc, char **argv){
 				break;
 			case 'C':
 				fprintf(stderr, "remove '%s'? (y/N): ", cachedir);
-				if (getchar() == 'y')
-					rmdir(cachedir);
+				if (getchar() == 'y'){
+					char tmp[PATH_MAX+7];
+					sprintf(tmp, "rm -rf %s", cachedir);
+					system(tmp);
+				}
 				return 0;
 			case 'h':
 				usage();
@@ -117,13 +120,14 @@ int main(int argc, char **argv){
 		fullPath = fullpath(filelist[i], cwd);
 		if (stat(filelist[i], &sb) != 0){
 			fprintf(stderr, "Error with %s\n", fullPath);
+			continue;
 		}
 		// produce unique id
 		sprintf(fileId, "%s-%lu-%lu-%lu", fullPath, sb.st_ino, sb.st_ctim.tv_nsec, sb.st_size);
 		// produce shrimple hash of id
 		char* fileHash = hash(fileId);
 		// create path to cache file
-		sprintf(fileCache, "%s%s", cachedir, fileHash);
+		sprintf(fileCache, "%s/%s", cachedir, fileHash);
 		// printf("file[i]: %s\nfullPath: %s\ncachePath: %s\n", filelist[i], fullPath, fileCache);
 
 		// generate cache if needed
@@ -182,7 +186,8 @@ int main(int argc, char **argv){
 	for (size_t i=0, ii=0; i < selectnum; i++) {
 		str = basename(selectionlist[i]);
 		// fprintf(stderr, "str: %s\n", str);
-		// compare against every item in hash list,
+		// fprintf(stderr, "hash: %s\n", str);
+		// compare against every item in hash list
 		for (; ii < filecount; ii++){
 			if (hashlist[ii]){
 				if (strcmp(hashlist[ii], str) == 0){

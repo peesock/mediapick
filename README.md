@@ -38,8 +38,6 @@ find . -maxdepth 1 -type f | mediapick
 Move stupid looking photos to the bin:
 ```sh
 find pics/smartphotos | mediapick | while read file; do
-    printf "Delete '$file'? (Y/n)"
-    [ "$(read /dev/tty)" = "n" ] && continue
     rm -v "$file"
 done
 ```
@@ -49,14 +47,24 @@ Handle files with `\n`
 find folderwithmaliciouslynamedmediafiles/vids -print0 | mediapick -0
 ```
 
-Use [lf](https://github.com/gokcehan/lf) to select a list of files, put the cached images in `~/.cache/lf`, ensure the delimiter is `\n` because shell variables cannot hold the null character, mark them with nsxiv, and re-select the marked files in `lf` to do actions on:
+Use [a terminal file manager](https://github.com/gokcehan/lf) to select a list of files, put the cached images in `~/.cache/lf`, ensure the delimiter is `\n` because shell variables cannot hold the null character, mark them with nsxiv, and re-select the marked files in `lf` to do actions on:
 ```sh
-markList=$(echo "$fs" | mediapick -c "$HOME/.cache/lf" -d '\n')
-if [ -n "$markList" ]; then
-    lf -remote "send $id unselect"
-    echo "$markList" | while read file; do
-        lf -remote "send $id toggle \"$file\""
-    done
+fileList=$(mktemp)
+markList=$(mktemp)
+print0=false
+recurse=false
+if [ -z "$fs" ]; then
+	if [ $recurse = true ]; then
+		find . -type f -print > "$fileList"
+	else
+		find . -maxdepth 1 -type f -print > "$fileList"
+	fi
+else
+	echo "$fs" > "$fileList"
 fi
+mediapick -c "$HOME/.cache/lf" -d '\n' <"$fileList" >"$markList"
+lf -remote "send $id unselect"
+xargs -I{} -d '\n' lf -remote "send $id toggle \"{}\"" <"$markList"
+rm "$fileList" "$markList"
 ```
 \(This is my main use for mediapick\)

@@ -4,7 +4,7 @@ BIN=mediapick
 all: build
 
 build:
-	$(CC) mediapick.c -lssl -lcrypto -lmagic -lffmpegthumbnailer -o $(BIN)
+	$(CC) main.c -lssl -lcrypto -lmagic -lffmpegthumbnailer -o $(BIN)
 
 clean:
 	rm -f $(BIN)
