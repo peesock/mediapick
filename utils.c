@@ -175,11 +175,9 @@ char* hash(char* string){
 
 	SHA1((unsigned char*)string, inlen, hashbuf);
 
-	// glibc yells at me for sprintfing a var into itself
-	char* tmp = output;
 	for (int i = 0; i < HASHLEN; i++) {
-		sprintf(output, "%s%x", tmp, hashbuf[i]);
-		tmp = output;
+		sprintf(output, "%s%x", output, hashbuf[i]);
+		// btw glibc yells at me for sprintfing a var into itself. Oh well!
 	}
 	free(hashbuf);
 	return output;
